@@ -164,6 +164,7 @@ def main():
                         right_alt_press_start_time = time.time()
                     elif not right_alt_recording_started and not any_recording and (time.time() - right_alt_press_start_time) >= 0.5:
                         right_alt_recording_started = True
+                        right_alt_record_start_time = time.time()
                         osd.show_text("🔴 錄音中...", "#00ff00")  # 綠色
                         recorder.start_recording()
                 else:
@@ -173,8 +174,17 @@ def main():
                             right_alt_recording_started = False
                             osd.hide()
                             recorder.stop_recording()
-                            processing_thread = threading.Thread(target=process_audio, args=(recorder,))
-                            processing_thread.start()
+                            duration = time.time() - right_alt_record_start_time
+                            if duration < 2.0:
+                                # 錄音不足 2 秒，視為誤按，直接略過
+                                def _show_too_short():
+                                    osd.show_text("⚠️ 太短，已略過", "#ff8800")
+                                    time.sleep(1.5)
+                                    osd.hide()
+                                threading.Thread(target=_show_too_short, daemon=True).start()
+                            else:
+                                processing_thread = threading.Thread(target=process_audio, args=(recorder,))
+                                processing_thread.start()
 
                 # ===== Caps Lock 鍵（快速模式，跳過潤稿）=====
                 if keyboard.is_pressed('caps lock'):
@@ -183,6 +193,7 @@ def main():
                         caps_press_start_time = time.time()
                     elif not caps_recording_started and not any_recording and (time.time() - caps_press_start_time) >= 0.5:
                         caps_recording_started = True
+                        caps_record_start_time = time.time()
                         osd.show_text("🔴 快速錄音中...", "#ffa500")  # 橘色
                         recorder.start_recording()
                 else:
@@ -192,8 +203,18 @@ def main():
                             caps_recording_started = False
                             osd.hide()
                             recorder.stop_recording()
-                            processing_thread = threading.Thread(target=process_audio_raw, args=(recorder,))
-                            processing_thread.start()
+                            duration = time.time() - caps_record_start_time
+                            if duration < 1.0:
+                                # 錄音不足 1 秒，視為誤按，直接略過
+                                def _show_too_short_caps():
+                                    osd.show_text("⚠️ 太短，已略過", "#ff8800")
+                                    time.sleep(1.5)
+                                    osd.hide()
+                                threading.Thread(target=_show_too_short_caps, daemon=True).start()
+                            else:
+                                processing_thread = threading.Thread(target=process_audio_raw, args=(recorder,))
+                                processing_thread.start()
+
 
                 time.sleep(0.01)  # 稍微暫停以避免 CPU 使用率過高
         except Exception as e:
