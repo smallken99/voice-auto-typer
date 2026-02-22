@@ -1,0 +1,36 @@
+# 環境變數與機密資訊
+.env
+
+# 虛擬環境
+.venv/
+venv/
+env/
+models/
+
+# Python 快取與編譯檔
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.exe
+
+# 暫存音頻檔 (錄音過程產生)
+*.wav
+temp_audio.wav
+
+# 打包工具的產物 (PyInstaller)
+build/
+dist/
+*.spec
+
+# 編輯器與 IDE 設定檔
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# 其他日誌與快取
+*.log
+.mypy_cache/
+.pytest_cache/
+/Auto-Typing.exe

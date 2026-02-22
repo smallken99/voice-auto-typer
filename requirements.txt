@@ -1,0 +1,11 @@
+keyboard
+sounddevice
+soundfile
+google-genai
+pyautogui
+pyperclip
+python-dotenv
+pystray
+Pillow
+pyinstaller
+faster-whisper
