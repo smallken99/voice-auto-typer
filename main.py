@@ -128,45 +128,54 @@ def main():
     
     # 步驟 2：正式進入系統後台準備
     recorder = AudioRecorder("temp_audio.wav")
-    hotkey = 'right alt'
     
     # 控制背景執行緒的開關
     stop_event = threading.Event()
     
     def keyboard_listener():
         # 右 Alt 鍵（Gemini 潤稿模式）狀態
-        esc_is_pressed = False
-        esc_press_start_time = 0
-        esc_recording_started = False
-        
+        right_alt_is_pressed = False
+        right_alt_press_start_time = 0
+        right_alt_recording_started = False
+
         # Caps Lock 鍵（快速模式）狀態
         caps_is_pressed = False
         caps_press_start_time = 0
         caps_recording_started = False
-        
+
+        # 使用 hook + event.name 精確偵測右 Alt，完全排除左 Alt
+        def on_key_event(event):
+            nonlocal right_alt_is_pressed
+            if event.name == 'right alt':
+                if event.event_type == keyboard.KEY_DOWN:
+                    right_alt_is_pressed = True
+                elif event.event_type == keyboard.KEY_UP:
+                    right_alt_is_pressed = False
+
+        keyboard.hook(on_key_event)
+
         try:
             while not stop_event.is_set():
-                any_recording = esc_recording_started or caps_recording_started
-                
+                any_recording = right_alt_recording_started or caps_recording_started
+
                 # ===== 右 Alt 鍵（Gemini 潤稿模式）=====
-                if keyboard.is_pressed(hotkey):
-                    if not esc_is_pressed:
-                        esc_is_pressed = True
-                        esc_press_start_time = time.time()
-                    elif not esc_recording_started and not any_recording and (time.time() - esc_press_start_time) >= 0.5:
-                        esc_recording_started = True
-                        osd.show_text("🔴 錄音中...", "#00ff00") # 綠色
+                if right_alt_is_pressed:
+                    if right_alt_press_start_time == 0:
+                        right_alt_press_start_time = time.time()
+                    elif not right_alt_recording_started and not any_recording and (time.time() - right_alt_press_start_time) >= 0.5:
+                        right_alt_recording_started = True
+                        osd.show_text("🔴 錄音中...", "#00ff00")  # 綠色
                         recorder.start_recording()
                 else:
-                    if esc_is_pressed:
-                        esc_is_pressed = False
-                        if esc_recording_started:
-                            esc_recording_started = False
+                    if right_alt_press_start_time != 0:
+                        right_alt_press_start_time = 0
+                        if right_alt_recording_started:
+                            right_alt_recording_started = False
                             osd.hide()
                             recorder.stop_recording()
                             processing_thread = threading.Thread(target=process_audio, args=(recorder,))
                             processing_thread.start()
-                
+
                 # ===== Caps Lock 鍵（快速模式，跳過潤稿）=====
                 if keyboard.is_pressed('caps lock'):
                     if not caps_is_pressed:
@@ -174,7 +183,7 @@ def main():
                         caps_press_start_time = time.time()
                     elif not caps_recording_started and not any_recording and (time.time() - caps_press_start_time) >= 0.5:
                         caps_recording_started = True
-                        osd.show_text("🔴 快速錄音中...", "#ffa500") # 橘色
+                        osd.show_text("🔴 快速錄音中...", "#ffa500")  # 橘色
                         recorder.start_recording()
                 else:
                     if caps_is_pressed:
@@ -185,11 +194,12 @@ def main():
                             recorder.stop_recording()
                             processing_thread = threading.Thread(target=process_audio_raw, args=(recorder,))
                             processing_thread.start()
-                
-                time.sleep(0.01) # 稍微暫停以避免 CPU 使用率過高
+
+                time.sleep(0.01)  # 稍微暫停以避免 CPU 使用率過高
         except Exception as e:
             print(f"鍵盤監聽發生錯誤: {e}")
         finally:
+            keyboard.unhook(on_key_event)
             if recorder.recording:
                 recorder.stop_recording()
 
