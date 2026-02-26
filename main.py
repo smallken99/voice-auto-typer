@@ -133,48 +133,48 @@ def main():
     stop_event = threading.Event()
     
     def keyboard_listener():
-        # 右 Alt 鍵（Gemini 潤稿模式）狀態
-        right_alt_is_pressed = False
-        right_alt_press_start_time = 0
-        right_alt_recording_started = False
+        # 右 Ctrl 鍵（Gemini 潤稿模式）狀態
+        right_ctrl_is_pressed = False
+        right_ctrl_press_start_time = 0
+        right_ctrl_recording_started = False
 
         # Caps Lock 鍵（快速模式）狀態
         caps_is_pressed = False
         caps_press_start_time = 0
         caps_recording_started = False
 
-        # 使用 hook + event.name 精確偵測右 Alt，完全排除左 Alt
+        # 使用 hook + event.name 精確偵測右 Ctrl，完全排除左 Ctrl
         def on_key_event(event):
-            nonlocal right_alt_is_pressed
-            if event.name == 'right alt':
+            nonlocal right_ctrl_is_pressed
+            if event.name == 'right ctrl':
                 if event.event_type == keyboard.KEY_DOWN:
-                    right_alt_is_pressed = True
+                    right_ctrl_is_pressed = True
                 elif event.event_type == keyboard.KEY_UP:
-                    right_alt_is_pressed = False
+                    right_ctrl_is_pressed = False
 
         keyboard.hook(on_key_event)
 
         try:
             while not stop_event.is_set():
-                any_recording = right_alt_recording_started or caps_recording_started
+                any_recording = right_ctrl_recording_started or caps_recording_started
 
-                # ===== 右 Alt 鍵（Gemini 潤稿模式）=====
-                if right_alt_is_pressed:
-                    if right_alt_press_start_time == 0:
-                        right_alt_press_start_time = time.time()
-                    elif not right_alt_recording_started and not any_recording and (time.time() - right_alt_press_start_time) >= 0.5:
-                        right_alt_recording_started = True
-                        right_alt_record_start_time = time.time()
+                # ===== 右 Ctrl 鍵（Gemini 潤稿模式）=====
+                if right_ctrl_is_pressed:
+                    if right_ctrl_press_start_time == 0:
+                        right_ctrl_press_start_time = time.time()
+                    elif not right_ctrl_recording_started and not any_recording and (time.time() - right_ctrl_press_start_time) >= 0.5:
+                        right_ctrl_recording_started = True
+                        right_ctrl_record_start_time = time.time()
                         osd.show_text("🔴 錄音中...", "#00ff00")  # 綠色
                         recorder.start_recording()
                 else:
-                    if right_alt_press_start_time != 0:
-                        right_alt_press_start_time = 0
-                        if right_alt_recording_started:
-                            right_alt_recording_started = False
+                    if right_ctrl_press_start_time != 0:
+                        right_ctrl_press_start_time = 0
+                        if right_ctrl_recording_started:
+                            right_ctrl_recording_started = False
                             osd.hide()
                             recorder.stop_recording()
-                            duration = time.time() - right_alt_record_start_time
+                            duration = time.time() - right_ctrl_record_start_time
                             if duration < 2.0:
                                 # 錄音不足 2 秒，視為誤按，直接略過
                                 def _show_too_short():
@@ -247,7 +247,7 @@ def main():
                      bg="#1e1e2e", fg="#cba6f7").pack(pady=(18, 8))
 
             help_items = [
-                ("右 Alt（按住 0.5 秒後說話）", "🟢 潤稿模式  →  Whisper 轉錄 + Gemini 潤稿後貼上"),
+                ("右 Ctrl（按住 0.5 秒後說話）", "🟢 潤稿模式  →  Whisper 轉錄 + Gemini 潤稿後貼上"),
                 ("Caps Lock（按住 0.5 秒後說話）", "🟠 快速模式  →  Whisper 轉錄後直接貼上，不潤稿"),
                 ("放開按鍵", "⏹  停止錄音並開始處理"),
             ]
@@ -283,14 +283,14 @@ def main():
 
     print("\n" + "=" * 50)
     print("🎙️ Auto-Typing 語音打字小幫手已啟動！(常駐系統匣模式)")
-    print(f"👉 請「按住」右邊的 'Alt' 鍵開始說話，放開即進入自動處理（含 AI 潤稿）...")
+    print(f"👉 請「按住」右邊的 'Ctrl' 鍵開始說話，放開即進入自動處理（含 AI 潤稿）...")
     print(f"👉 請「按住」 'Caps Lock' 鍵開始說話，放開即快速貼上（不經潤稿）...")
     print("👉 請在螢幕右下角系統匣角落找到綠色方塊圖示，右鍵即可「退出 (Exit)」。")
     print("=" * 50 + "\n")
 
     # 顯示啟動成功的提示
     def show_startup_message():
-        osd.show_text("🚀 語音助手已啟動｜右Alt: 潤稿｜CapsLock: 快速", "#00ffff") # 青藍色
+        osd.show_text("🚀 語音助手已啟動｜右Ctrl: 潤稿｜CapsLock: 快速", "#00ffff") # 青藍色
         time.sleep(3)
         osd.hide()
     
